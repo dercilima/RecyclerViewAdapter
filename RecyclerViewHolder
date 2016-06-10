@@ -1,0 +1,81 @@
+package br.com.dercilima.adapters.recyclerviews.bases;
+
+import android.content.Context;
+import android.os.Parcelable;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import br.com.dercilima.adapters.interfaces.OnRecyclerViewItemClickListener;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Created by master on 27/04/16.
+ */
+public abstract class RecyclerViewHolder<Obj extends Parcelable> extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+    // Instancia do Adapter cujo Holder está "hospedado"
+    private RecyclerViewAdapter recyclerViewAdapter;
+
+    // Listener para feedback de click no itemView
+    private OnRecyclerViewItemClickListener onRecyclerViewItemClickListener;
+
+    public RecyclerViewHolder(RecyclerViewAdapter recyclerViewAdapter, View itemView, OnRecyclerViewItemClickListener onRecyclerViewItemClickListener) {
+        super(itemView);
+
+        this.recyclerViewAdapter = recyclerViewAdapter;
+        this.onRecyclerViewItemClickListener = onRecyclerViewItemClickListener;
+
+        // Adicionar o listener de onClickListener
+        if (onRecyclerViewItemClickListener != null) {
+            itemView.setOnClickListener(this);
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        // Setar a posição seleciona no adapter
+        recyclerViewAdapter.setPositionSelected(getAdapterPosition());
+
+        // Notificar o tem selecionado
+        onRecyclerViewItemClickListener.onItemClickListener(getAdapterPosition());
+    }
+
+    protected Context getContext() {
+        return recyclerViewAdapter.getContext();
+    }
+
+    public abstract void bind(Obj item);
+
+    /**
+     * Altera a cor de todos os TextView's do itemView.
+     */
+    protected void setTextColor(int color) {
+        for (View view : extractViews(itemView, TextView.class)) {
+            ((TextView) view).setTextColor(ContextCompat.getColor(getContext(), color));
+        }
+    }
+
+    private List<View> extractViews(View view, Class... _classes) {
+        List<View> views = new ArrayList<>();
+        for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
+            View childView = ((ViewGroup) view).getChildAt(i);
+            if (childView instanceof ViewGroup) {
+                views.addAll(extractViews(childView));
+            } else {
+                for (Class _class : _classes) {
+                    if (_class.equals(childView.getClass()) || _class.equals(childView.getClass().getSuperclass())) {
+                        views.add(childView);
+                        break;
+                    }
+                }
+            }
+        }
+        return views;
+    }
+
+}
