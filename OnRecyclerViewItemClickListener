@@ -1,0 +1,8 @@
+package br.com.dercilima.adapters.interfaces;
+
+/**
+ * Created by dercilima on 28/04/16.
+ */
+public interface OnRecyclerViewItemClickListener {
+    void onItemClickListener(int position);
+}
