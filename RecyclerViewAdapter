@@ -1,0 +1,153 @@
+package br.com.dercilima.adapters.recyclerviews.bases;
+
+import android.content.Context;
+import android.os.Parcelable;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import br.com.dercilima.adapters.interfaces.OnRecyclerViewItemClickListener;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+
+/**
+ * Created by dercilima on 27/04/16.
+ */
+public class RecyclerViewAdapter<VH extends RecyclerViewHolder, Obj extends Parcelable> extends RecyclerView.Adapter<VH> {
+
+    private Context mContext;
+
+    // Lista de Itens a serem carregados no recyclerview
+    private List<Obj> mList;
+
+    // Listener de click no item da lista
+    protected OnRecyclerViewItemClickListener onItemClickListener;
+
+    // Posição selecionada no recyclerview
+    private int positionSelected = -1;
+
+    // Layout dos item a serem inflados
+    private int mLayout;
+
+    // ViewHolder a ser instanciado e retornado no método onCreateView
+    private Class<VH> mClass;
+
+    // Mantém o item selecionado com um clique e quando clicar novamente desmarca o item
+    private boolean keepItemSelected = true;
+
+    public RecyclerViewAdapter(Context context, int layout, Class<VH> _class, List<Obj> list) {
+        this.mContext = context;
+        this.mList = list;
+        this.mLayout = layout;
+        this.mClass = _class;
+    }
+
+    @Override
+    public VH onCreateViewHolder(ViewGroup parent, int viewType) {
+        // Inflar o layout do item
+        View itemView = LayoutInflater.from(getContext()).inflate(mLayout, null, false);
+
+        RecyclerView.LayoutParams params = new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        itemView.setLayoutParams(params);
+
+        RecyclerViewHolder myViewHolder = null;
+        try {
+            myViewHolder = mClass
+                    .getConstructor(RecyclerViewAdapter.class, View.class, OnRecyclerViewItemClickListener.class)
+                    .newInstance(this, itemView, onItemClickListener);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Retorna o viewholder
+        return (VH) myViewHolder;
+    }
+
+
+    @Override
+    public void onBindViewHolder(VH holder, int position) {
+        // Exibir os dados
+        holder.bind(mList.get(position));
+
+        // Apenas se manter o item selecionado
+        if (keepItemSelected) {
+            // Colorir o background de acordo com o status (Selected or not)
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(getContext(), getSelectionColor(position)));
+        }
+    }
+
+
+    private int getSelectionColor(int position) {
+        // todo definir as cores quando o item for selecionado
+        return position == getPositionSelected() ? R.color.list_item_selected : android.R.color.white;
+    }
+
+
+    @Override
+    public int getItemCount() {
+        return mList.size();
+    }
+
+
+    protected Context getContext() {
+        return mContext;
+    }
+
+
+    /**
+     * Adicionar um listener para o click sobre um item do recyclerview
+     * @param onItemClickListener
+     */
+    public void setOnItemClickListener(OnRecyclerViewItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
+
+    /**
+     * @return Retorna a posição selecionada na lista
+     */
+    public int getPositionSelected() {
+        return positionSelected;
+    }
+
+
+    public void setPositionSelected(int positionSelected) {
+
+        // Se clicar em um item já selecionado, então desmarca
+        if (positionSelected == this.positionSelected && keepItemSelected) {
+            this.positionSelected = -1;
+        } else {
+            this.positionSelected = positionSelected;
+        }
+
+        // Atualizar o adapter
+        notifyDataSetChanged();
+    }
+
+    protected List<Obj> getItens() {
+        return mList;
+    }
+
+    /**
+     * Recupera o item selecionado no RecyclerView
+     * @return O Objeto selecionado
+     */
+    public Obj getItemSelected() {
+        return getPositionSelected() >= 0 ? mList.get(getPositionSelected()) : null;
+    }
+
+    public void keepItemSelected(boolean keepItemSelected) {
+        this.keepItemSelected = keepItemSelected;
+    }
+}
